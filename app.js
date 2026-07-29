@@ -8,7 +8,7 @@
    ============================================================ */
 
 const LIFF_ID   = "2010597177-MwBgBa2B";
-const DRAFT_KEY = "konkatsu_qa_draft";
+const DRAFT_KEY = "konkatsu_qa_part1_draft";
 
 const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbwa7x1G4dHYRNUkfizGSXBcyxUemJzjIfKAtpfkeMJ8YQWYFtG_Om3kwltys85oamai/exec";
 

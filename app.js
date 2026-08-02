@@ -426,40 +426,6 @@ function getLineUserId() {
   return idToken.sub;
 }
 
-/* ------------------------------------------------------------
-   スクショ抑止用ウォーターマーク
-   ------------------------------------------------------------
-   Webアプリの仕様上、スクリーンショットの撮影自体を検知・
-   ブロックすることはできない。そのため「撮られても、誰が・いつ
-   閲覧した画面かが写り込む」ようにし、無断転載・拡散への
-   心理的な抑止力として機能させる。
-   閲覧者のLINEユーザーIDハッシュ（先頭8文字）と閲覧日時を、
-   画面全体に薄く敷き詰めて表示する。position:fixedのため
-   スクロールしても常に画面上に留まる。
-   ------------------------------------------------------------ */
-function buildWatermarkSVG(text) {
-  const tileW = 240, tileH = 140;
-  const safeText = escapeHTML(text);
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${tileW}" height="${tileH}">` +
-      `<text x="0" y="${tileH / 2}" font-size="12" font-family="sans-serif" ` +
-      `fill="rgba(0,0,0,0.55)" transform="rotate(-28 ${tileW / 2} ${tileH / 2})">${safeText}</text>` +
-    `</svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
-
-function showScreenshotWatermark(viewerHash) {
-  const el = document.getElementById("screenshotWatermark");
-  if (!el) return;
-  const stamp = new Date().toLocaleString("ja-JP", {
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit",
-  });
-  const label = `${viewerHash.slice(0, 8)}  ${stamp}`;
-  el.style.backgroundImage = `url("${buildWatermarkSVG(label)}")`;
-  el.classList.add("show");
-}
-
 function escapeHTML(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -643,7 +609,6 @@ async function handleSharedView(id) {
   }
 
   renderViewMode(data);
-  showScreenshotWatermark(viewerHash);
 }
 
 /* ============================================================

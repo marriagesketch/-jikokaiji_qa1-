@@ -66,6 +66,30 @@
   word-break: break-word;
 }
 
+.view-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fff7e6;
+  border: 1px solid #ffe1a8;
+  border-radius: 12px;
+}
+
+.view-tip-icon {
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.view-tip-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #a87b1f;
+}
+
 .slider-visual {
   margin-top: 4px;
 }
@@ -193,22 +217,23 @@
   <div id="viewMode"></div>
 
   <!-- Q1 -->
-  <label>Q1 朝起きる時間と夜寝る時間を教えてください。</label>
-  <label>起床時間</label>
+  <label>Q1 朝起きる時間は何時ですか？</label>
   <input type="time" id="q1">
-  <label>就寝時間</label>
+
+  <!-- Q2 -->
+  <label>Q2 夜寝る時間は何時ですか？</label>
   <input type="time" id="q2">
 
   <!-- Q3 -->
   <label>
-    Q2 仕事終わり、どんな過ごし方をしていますか？
+    Q3 仕事終わり、どんな過ごし方をしていますか？
     将来の理想ではなく今どんな過ごし方かを教えてください。
   </label>
   <textarea id="q3"></textarea>
 
   <!-- Q4 -->
   <label>
-    Q3 平日の朝いつもつけているニュース/ワイドショー番組はありますか？
+    Q4 平日の朝いつもつけているニュース/ワイドショー番組はありますか？
     あればどのチャンネル、番組名かを教えてください。
   </label>
 
@@ -229,16 +254,16 @@
   </label>
 
   <!-- Q5 -->
-  <label>Q4 子どもの頃好きだったテレビ番組は何ですか？</label>
+  <label>Q5 子どもの頃好きだったテレビ番組は何ですか？</label>
   <textarea id="q5"></textarea>
    
   <!-- Q6 -->
-  <label>Q5 これまでに呼ばれたことのあるあだ名は何ですか？</label>
+  <label>Q6 これまでに呼ばれたことのあるあだ名は何ですか？</label>
   <textarea id="q6"></textarea>
 
   <!-- Q7 -->
   <label>
-    Q6 MBTI診断したことはありますか？
+    Q7 MBTI診断したことはありますか？
     あればどのタイプだったか教えてください。
   </label>
 
@@ -259,7 +284,7 @@
   </label>
 
   <!-- Q8 -->
-  <label>Q7 ポジティブですか？ネガティブですか？</label>
+  <label>Q8 ポジティブですか？ネガティブですか？</label>
 
   <div class="slider-labels">
     <span>ネガティブ</span>
@@ -269,7 +294,7 @@
   <input type="range" id="q8" min="1" max="5" step="1">
 
   <!-- Q9 -->
-  <label>Q8 周囲の感情などを察する方ですか？</label>
+  <label>Q9 周囲の感情などを察する方ですか？</label>
 
   <div class="slider-labels">
     <span>察さない</span>
@@ -279,7 +304,7 @@
   <input type="range" id="q9" min="1" max="5" step="1">
 
 <!-- Q10 -->
-  <label>Q9 慎重に決めるタイプですか？思い切りがいいタイプですか？</label>
+  <label>Q10 慎重に決めるタイプですか？思い切りがいいタイプですか？</label>
 
   <div class="slider-labels">
     <span>慎重</span>
@@ -289,28 +314,28 @@
   <input type="range" id="q10" min="1" max="5" step="1">
 
   <!-- Q11 -->
-  <label>Q10 部活動、サークル活動は何をしていましたか？</label>
+  <label>Q11 部活動、サークル活動は何をしていましたか？</label>
   <textarea id="q11-1"></textarea>
 
   <!-- Q12 -->
-  <label>Q11 どんなバイトをしたことがありますか？</label>
+  <label>Q12 どんなバイトをしたことがありますか？</label>
   <textarea id="q12-1"></textarea>
 
   <!-- Q13 -->
   <label>
-    Q12 休みの日に友人や家族と会うことはありますか？
+    Q13 休みの日に友人や家族と会うことはありますか？
     ある場合はどんなことをすることが多いですか？
   </label>
   <textarea id="q13-1"></textarea>
 
   <!-- Q14 -->
   <label>
-    Q13 1人で過ごす時の休みの日の過ごし方を教えてください。
+    Q14 1人で過ごす時の休みの日の過ごし方を教えてください。
   </label>
   <textarea id="q14-1"></textarea>
 
   <!-- Q15 -->
-  <label>Q14 LINEの頻度はどれくらいが理想ですか？</label>
+  <label>Q15 LINEの頻度はどれくらいが理想ですか？</label>
 
 <label> デートなど相談事項の予定調整、返信までどれくらいなら待てますか？<br>
 1ヶ月後に記念日があり、前後でデートをしようと話しています。具体的なお店や日時をLINEで相談中です。予約がすぐ埋まってしまうわけでもなく、まだ日程には余裕があるという前提です。この内容について返信までどれぐらいなら待てるか答えてください。</label>
@@ -369,7 +394,7 @@
   </label>
 
   <!-- Q16 -->
-  <label>Q15 今後デートで行きたいところはありますか？</label>
+  <label>Q16 今後デートで行きたいところはありますか？</label>
   <textarea id="q16"></textarea>
 
   <div class="button-group">

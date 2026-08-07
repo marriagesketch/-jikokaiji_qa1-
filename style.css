@@ -87,8 +87,8 @@ textarea{
   resize:vertical;
 }
 
-#q4Detail,
-#q7Detail{
+#q3Detail,
+#q6Detail{
   margin:8px 0 8px 24px;
   width:calc(100% - 24px);
 }

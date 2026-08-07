@@ -16,20 +16,22 @@ const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbwa7x1G4dHYRNUkfiz
    選択肢ラベル（表示用 & 統計用の全文テキストとして共用）
    ------------------------------------------------------------ */
 const Q15_1_LABELS = {
-  "a15-1-1": "返信まで6時間以内（朝LINEしたら昼までには返してほしい）",
-  "a15-1-2": "返信まで12時間以内（朝LINEしたら夜までには返してほしい）",
-  "a15-1-3": "返信まで24時間以内（朝LINEしたら翌朝までには返してほしい）",
-  "a15-1-4": "返信まで3日以内",
-  "a15-1-5": "3日以上でも日程に余裕があれば待てる",
+  "a14-1-1": "返信まで6時間以内（朝LINEしたら昼までには返してほしい）",
+  "a14-1-2": "返信まで12時間以内（朝LINEしたら夜までには返してほしい）",
+  "a14-1-3": "返信まで24時間以内（朝LINEしたら翌朝までには返してほしい）",
+  "a14-1-4": "返信まで3日以内",
+  // 注意: index.html側のvalueが "a14-1-5" ではなく "a14-14" になっているため、
+  // それに合わせています。可能であればHTML側を "a14-1-5" に修正してください。
+  "a14-14": "3日以上でも日程に余裕があれば待てる",
 };
 const Q15_2_LABELS = {
-  "a15-2-1": "返信まで6時間以内（朝LINEしたら昼までには返してほしい）",
-  "a15-2-2": "返信まで12時間以内（朝LINEしたら夜までには返してほしい）",
-  "a15-2-3": "返信まで24時間以内（朝LINEしたら翌朝までには返してほしい）",
-  "a15-2-4": "返信まで3日以内",
-  "a15-2-5": "雑談LINEには返信はあってもなくてもよい",
-  "a15-2-6": "雑談LINEは自分は送らないが相手から送られる分には気にしない",
-  "a15-2-7": "雑談LINEは送りたくないし送られるのも好きじゃない",
+  "a14-2-1": "返信まで6時間以内（朝LINEしたら昼までには返してほしい）",
+  "a14-2-2": "返信まで12時間以内（朝LINEしたら夜までには返してほしい）",
+  "a14-2-3": "返信まで24時間以内（朝LINEしたら翌朝までには返してほしい）",
+  "a14-2-4": "返信まで3日以内",
+  "a14-2-5": "雑談LINEには返信はあってもなくてもよい",
+  "a14-2-6": "雑談LINEは自分は送らないが相手から送られる分には気にしない",
+  "a14-2-7": "雑談LINEは送りたくないし送られるのも好きじゃない",
 };
 
 /* ------------------------------------------------------------
@@ -153,31 +155,34 @@ function sliderVisualHTML(value, leftLabel, rightLabel, max = 5) {
    フォーム値の収集
    ------------------------------------------------------------ */
 function collectFormData() {
-  const q4Radio    = document.querySelector('input[name="q4"]:checked');
-  const q7Radio    = document.querySelector('input[name="q7"]:checked');
-  const q15_1Radio = document.querySelector('input[name="q15-1"]:checked');
-  const q15_2Radio = document.querySelector('input[name="q15-2"]:checked');
+  // ※ ここでの内部フィールド名（q1〜q16等）はAnalyticsシートの列構成に
+  //   合わせて維持しています。実際の画面上のQ番号とは1つずれています
+  //   （新HTMLではQ1が起床/就寝時間の統合になったため）。
+  const q3Radio    = document.querySelector('input[name="q3"]:checked');
+  const q6Radio    = document.querySelector('input[name="q6"]:checked');
+  const q14_1Radio = document.querySelector('input[name="q14-1"]:checked');
+  const q14_2Radio = document.querySelector('input[name="q14-2"]:checked');
 
   return {
-    q1:       document.getElementById("q1").value,
-    q2:       document.getElementById("q2").value,
-    q3:       document.getElementById("q3").value,
-    q4:       q4Radio  ? q4Radio.value  : "",
-    q4Detail: document.getElementById("q4Detail").value,
-    q5:       document.getElementById("q5").value,
-    q6:       document.getElementById("q6").value,
-    q7:       q7Radio  ? q7Radio.value  : "",
-    q7Detail: document.getElementById("q7Detail").value,
-    q8:       document.getElementById("q8").value,
-    q9:       document.getElementById("q9").value,
-    q10:      document.getElementById("q10").value,
-    q11:      document.getElementById("q11-1").value,
-    q12:      document.getElementById("q12-1").value,
-    q13:      document.getElementById("q13-1").value,
-    q14:      document.getElementById("q14-1").value,
-    q15_1:    q15_1Radio ? q15_1Radio.value : "",
-    q15_2:    q15_2Radio ? q15_2Radio.value : "",
-    q16:      document.getElementById("q16").value,
+    q1:       document.getElementById("q1-1").value,   // 起床時間（画面Q1）
+    q2:       document.getElementById("q1-2").value,   // 就寝時間（画面Q1）
+    q3:       document.getElementById("q2").value,     // 仕事終わりの過ごし方（画面Q2）
+    q4:       q3Radio  ? q3Radio.value  : "",           // ニュース番組の有無（画面Q3）
+    q4Detail: document.getElementById("q3Detail").value,
+    q5:       document.getElementById("q4").value,     // 子どもの頃好きだった番組（画面Q4）
+    q6:       document.getElementById("q5").value,     // あだ名（画面Q5）
+    q7:       q6Radio  ? q6Radio.value  : "",           // MBTI診断の有無（画面Q6）
+    q7Detail: document.getElementById("q6Detail").value,
+    q8:       document.getElementById("q7").value,     // ポジティブ/ネガティブ（画面Q7）
+    q9:       document.getElementById("q8").value,     // 察する方か（画面Q8）
+    q10:      document.getElementById("q9").value,     // 慎重/思い切り（画面Q9）
+    q11:      document.getElementById("q10").value,    // 部活動・サークル（画面Q10）
+    q12:      document.getElementById("q11").value,    // バイト（画面Q11）
+    q13:      document.getElementById("q12").value,    // 休みの日（友人家族）（画面Q12）
+    q14:      document.getElementById("q13").value,    // 1人での休日（画面Q13）
+    q15_1:    q14_1Radio ? q14_1Radio.value : "",       // LINE頻度（デート予定）（画面Q14）
+    q15_2:    q14_2Radio ? q14_2Radio.value : "",       // LINE頻度（雑談）（画面Q14）
+    q16:      document.getElementById("q15").value,    // デートで行きたいところ（画面Q15）
   };
 }
 
@@ -223,34 +228,34 @@ function restoreFormData(data) {
     if (el && val !== undefined) el.value = val;
   };
 
-  setText("q1", data.q1);
-  setText("q2", data.q2);
-  setText("q3", data.q3);
-  setText("q5", data.q5);
-  setText("q6", data.q6);
-  setText("q8", data.q8);
-  setText("q9", data.q9);
-  setText("q10", data.q10);
-  setText("q11-1", data.q11);
-  setText("q12-1", data.q12);
-  setText("q13-1", data.q13);
-  setText("q14-1", data.q14);
-  setText("q16", data.q16);
+  setText("q1-1", data.q1);
+  setText("q1-2", data.q2);
+  setText("q2", data.q3);
+  setText("q4", data.q5);
+  setText("q5", data.q6);
+  setText("q7", data.q8);
+  setText("q8", data.q9);
+  setText("q9", data.q10);
+  setText("q10", data.q11);
+  setText("q11", data.q12);
+  setText("q12", data.q13);
+  setText("q13", data.q14);
+  setText("q15", data.q16);
 
   if (data.q4) {
-    const r = document.querySelector(`input[name="q4"][value="${data.q4}"]`);
-    if (r) { r.checked = true; toggleDetail("q4Detail", data.q4 === "yes"); setText("q4Detail", data.q4Detail); }
+    const r = document.querySelector(`input[name="q3"][value="${data.q4}"]`);
+    if (r) { r.checked = true; toggleDetail("q3Detail", data.q4 === "yes"); setText("q3Detail", data.q4Detail); }
   }
   if (data.q7) {
-    const r = document.querySelector(`input[name="q7"][value="${data.q7}"]`);
-    if (r) { r.checked = true; toggleDetail("q7Detail", data.q7 === "yes"); setText("q7Detail", data.q7Detail); }
+    const r = document.querySelector(`input[name="q6"][value="${data.q7}"]`);
+    if (r) { r.checked = true; toggleDetail("q6Detail", data.q7 === "yes"); setText("q6Detail", data.q7Detail); }
   }
   if (data.q15_1) {
-    const r = document.querySelector(`input[name="q15-1"][value="${data.q15_1}"]`);
+    const r = document.querySelector(`input[name="q14-1"][value="${data.q15_1}"]`);
     if (r) r.checked = true;
   }
   if (data.q15_2) {
-    const r = document.querySelector(`input[name="q15-2"][value="${data.q15_2}"]`);
+    const r = document.querySelector(`input[name="q14-2"][value="${data.q15_2}"]`);
     if (r) r.checked = true;
   }
 }
@@ -270,22 +275,22 @@ function toggleDetail(id, show) {
    ------------------------------------------------------------ */
 function validate(data) {
   const errors = [];
-  if (!data.q1)                                   errors.push("Q1: 朝起きる時間を入力してください。");
-  if (!data.q2)                                   errors.push("Q2: 夜寝る時間を入力してください。");
-  if (!data.q3.trim())                            errors.push("Q3: 仕事終わりの過ごし方を入力してください。");
-  if (!data.q4)                                   errors.push("Q4: ニュース番組の有無を選択してください。");
-  if (data.q4 === "yes" && !data.q4Detail.trim()) errors.push("Q4: 番組名を入力してください。");
-  if (!data.q5.trim())                            errors.push("Q5: 子どもの頃好きだったテレビ番組を入力してください。");
-  if (!data.q6.trim())                            errors.push("Q6: あだ名を入力してください。");
-  if (!data.q7)                                   errors.push("Q7: MBTI診断の有無を選択してください。");
-  if (data.q7 === "yes" && !data.q7Detail.trim()) errors.push("Q7: MBTIタイプを入力してください。");
-  if (!data.q11.trim())                           errors.push("Q11: 部活動・サークル活動を入力してください。");
-  if (!data.q12.trim())                           errors.push("Q12: バイト経験を入力してください。");
-  if (!data.q13.trim())                           errors.push("Q13: 休日の友人・家族との過ごし方を入力してください。");
-  if (!data.q14.trim())                           errors.push("Q14: 1人での休日の過ごし方を入力してください。");
-  if (!data.q15_1)                                errors.push("Q15: デート予定の返信までの許容時間を選択してください。");
-  if (!data.q15_2)                                errors.push("Q15: 雑談LINEの頻度を選択してください。");
-  if (!data.q16.trim())                           errors.push("Q16: デートで行きたい場所を入力してください。");
+  if (!data.q1)                                   errors.push("Q1: 起床時間を入力してください。");
+  if (!data.q2)                                   errors.push("Q1: 就寝時間を入力してください。");
+  if (!data.q3.trim())                            errors.push("Q2: 仕事終わりの過ごし方を入力してください。");
+  if (!data.q4)                                   errors.push("Q3: ニュース番組の有無を選択してください。");
+  if (data.q4 === "yes" && !data.q4Detail.trim()) errors.push("Q3: 番組名を入力してください。");
+  if (!data.q5.trim())                            errors.push("Q4: 子どもの頃好きだったテレビ番組を入力してください。");
+  if (!data.q6.trim())                            errors.push("Q5: あだ名を入力してください。");
+  if (!data.q7)                                   errors.push("Q6: MBTI診断の有無を選択してください。");
+  if (data.q7 === "yes" && !data.q7Detail.trim()) errors.push("Q6: MBTIタイプを入力してください。");
+  if (!data.q11.trim())                           errors.push("Q10: 部活動・サークル活動を入力してください。");
+  if (!data.q12.trim())                           errors.push("Q11: バイト経験を入力してください。");
+  if (!data.q13.trim())                           errors.push("Q12: 休日の友人・家族との過ごし方を入力してください。");
+  if (!data.q14.trim())                           errors.push("Q13: 1人での休日の過ごし方を入力してください。");
+  if (!data.q15_1)                                errors.push("Q14: デート予定の返信までの許容時間を選択してください。");
+  if (!data.q15_2)                                errors.push("Q14: 雑談LINEの頻度を選択してください。");
+  if (!data.q16.trim())                           errors.push("Q15: デートで行きたい場所を入力してください。");
   return errors;
 }
 
@@ -328,30 +333,31 @@ function renderViewMode(data, options = {}) {
   const { selfPreview = false, onShare = null } = options;
 
   const rows = [
-    { q: "Q1 朝起きる時間は何時ですか？",                          a: data.q1  || "未回答", tip: Q_ADVICE.q1 },
-    { q: "Q2 夜寝る時間は何時ですか？",                            a: data.q2  || "未回答", tip: Q_ADVICE.q2 },
-    { q: "Q3 仕事終わり、どんな過ごし方をしていますか？",              a: data.q3  || "未回答", tip: Q_ADVICE.q3 },
-    { q: "Q4 平日の朝いつもつけているニュース/ワイドショー番組はありますか？",
+    { q: "Q1 朝起きる時間と寝る時間を教えてください。",
+       a: `起床：${data.q1 || "未回答"} / 就寝：${data.q2 || "未回答"}`,
+       tip: [Q_ADVICE.q1, Q_ADVICE.q2].filter(Boolean).join("\n") },
+    { q: "Q2 仕事終わり、どんな過ごし方をしていますか？",              a: data.q3  || "未回答", tip: Q_ADVICE.q3 },
+    { q: "Q3 平日の朝いつもつけているニュース/ワイドショー番組はありますか？",
        a: data.q4 === "yes" ? `あり（${data.q4Detail}）` : data.q4 === "no" ? "なし" : "未回答", tip: Q_ADVICE.q4 },
-    { q: "Q5 子どもの頃好きだったテレビ番組は何ですか？",              a: data.q5  || "未回答", tip: Q_ADVICE.q5 },
-    { q: "Q6 これまでに呼ばれたことのあるあだ名は何ですか？",           a: data.q6  || "未回答", tip: Q_ADVICE.q6 },
-    { q: "Q7 MBTI診断したことはありますか？",
+    { q: "Q4 子どもの頃好きだったテレビ番組は何ですか？",              a: data.q5  || "未回答", tip: Q_ADVICE.q5 },
+    { q: "Q5 これまでに呼ばれたことのあるあだ名は何ですか？",           a: data.q6  || "未回答", tip: Q_ADVICE.q6 },
+    { q: "Q6 MBTI診断したことはありますか？",
        a: data.q7 === "yes" ? `あり（${data.q7Detail}）` : data.q7 === "no" ? "なし" : "未回答", tip: Q_ADVICE.q7 },
-    { q: "Q8 ポジティブですか？ネガティブですか？",
+    { q: "Q7 ポジティブですか？ネガティブですか？",
        slider: sliderVisualHTML(data.q8 || 3, "ネガティブ", "ポジティブ"), tip: Q_ADVICE.q8 },
-    { q: "Q9 周囲の感情などを察する方ですか？",
+    { q: "Q8 周囲の感情などを察する方ですか？",
        slider: sliderVisualHTML(data.q9 || 3, "察さない", "察する"), tip: Q_ADVICE.q9 },
-    { q: "Q10 慎重に決めるタイプですか？思い切りがいいタイプですか？",
+    { q: "Q9 慎重に決めるタイプですか？思い切りがいいタイプですか？",
        slider: sliderVisualHTML(data.q10 || 3, "慎重", "思い切りがいい"), tip: Q_ADVICE.q10 },
-    { q: "Q11 部活動、サークル活動は何をしていましたか？",             a: data.q11 || "未回答", tip: Q_ADVICE.q11 },
-    { q: "Q12 どんなバイトをしたことがありますか？",                  a: data.q12 || "未回答", tip: Q_ADVICE.q12 },
-    { q: "Q13 休みの日に友人や家族と会うことはありますか？",            a: data.q13 || "未回答", tip: Q_ADVICE.q13 },
-    { q: "Q14 1人で過ごす時の休みの日の過ごし方を教えてください。",      a: data.q14 || "未回答", tip: Q_ADVICE.q14 },
-    { q: "Q15-1 デートなど相談事項の予定調整、返信までどれくらいなら待てますか？（日程に余裕がある場合）",
+    { q: "Q10 部活動、サークル活動は何をしていましたか？",             a: data.q11 || "未回答", tip: Q_ADVICE.q11 },
+    { q: "Q11 どんなバイトをしたことがありますか？",                  a: data.q12 || "未回答", tip: Q_ADVICE.q12 },
+    { q: "Q12 休みの日に友人や家族と会うことはありますか？",            a: data.q13 || "未回答", tip: Q_ADVICE.q13 },
+    { q: "Q13 1人で過ごす時の休みの日の過ごし方を教えてください。",      a: data.q14 || "未回答", tip: Q_ADVICE.q14 },
+    { q: "Q14-1 デートなど相談事項の予定調整、返信までどれくらいなら待てますか？（日程に余裕がある場合）",
        a: Q15_1_LABELS[data.q15_1] || "未回答", tip: Q_ADVICE.q15 },
-    { q: "Q15-2 雑談LINEはどれくらいの頻度でしたいですか？",
+    { q: "Q14-2 雑談LINEはどれくらいの頻度でしたいですか？",
        a: Q15_2_LABELS[data.q15_2] || "未回答" },
-    { q: "Q16 今後デートで行きたいところはありますか？",              a: data.q16 || "未回答", tip: Q_ADVICE.q16 },
+    { q: "Q15 今後デートで行きたいところはありますか？",              a: data.q16 || "未回答", tip: Q_ADVICE.q16 },
   ];
 
   hideFormElements();
@@ -723,18 +729,18 @@ async function handleSharedView(id) {
     if (saved) restoreFormData(JSON.parse(saved));
   } catch (_) {}
 
-  /* ----- Q4 / Q7 ラジオ：詳細テキストエリアの表示制御 ----- */
-  document.querySelectorAll('input[name="q4"]').forEach(r =>
-    r.addEventListener("change", () => toggleDetail("q4Detail", r.value === "yes"))
+  /* ----- Q3 / Q6 ラジオ：詳細テキストエリアの表示制御 ----- */
+  document.querySelectorAll('input[name="q3"]').forEach(r =>
+    r.addEventListener("change", () => toggleDetail("q3Detail", r.value === "yes"))
   );
-  document.querySelectorAll('input[name="q7"]').forEach(r =>
-    r.addEventListener("change", () => toggleDetail("q7Detail", r.value === "yes"))
+  document.querySelectorAll('input[name="q6"]').forEach(r =>
+    r.addEventListener("change", () => toggleDetail("q6Detail", r.value === "yes"))
   );
 
-  const q4c = document.querySelector('input[name="q4"]:checked');
-  toggleDetail("q4Detail", q4c ? q4c.value === "yes" : false);
-  const q7c = document.querySelector('input[name="q7"]:checked');
-  toggleDetail("q7Detail", q7c ? q7c.value === "yes" : false);
+  const q3c = document.querySelector('input[name="q3"]:checked');
+  toggleDetail("q3Detail", q3c ? q3c.value === "yes" : false);
+  const q6c = document.querySelector('input[name="q6"]:checked');
+  toggleDetail("q6Detail", q6c ? q6c.value === "yes" : false);
 
   /* ----- 下書き保存 ----- */
   document.getElementById("draftBtn").addEventListener("click", () => {
@@ -749,14 +755,14 @@ async function handleSharedView(id) {
   /* ----- フォームクリア ----- */
   document.getElementById("clearBtn").addEventListener("click", () => {
     if (!confirm("入力内容をすべてクリアしますか？")) return;
-    ["q1","q2","q3","q4Detail","q5","q6","q7Detail","q11-1","q12-1","q13-1","q14-1","q16"]
+    ["q1-1","q1-2","q2","q3Detail","q4","q5","q6Detail","q10","q11","q12","q13","q15"]
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
     document.querySelectorAll('input[type="radio"]').forEach(r => (r.checked = false));
+    document.getElementById("q7").value = 3;
     document.getElementById("q8").value = 3;
     document.getElementById("q9").value = 3;
-    document.getElementById("q10").value = 3;
-    toggleDetail("q4Detail", false);
-    toggleDetail("q7Detail", false);
+    toggleDetail("q3Detail", false);
+    toggleDetail("q6Detail", false);
     try { localStorage.removeItem(DRAFT_KEY); } catch (_) {}
   });
 

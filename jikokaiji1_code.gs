@@ -33,16 +33,17 @@ var COL = {
 // Analytics シートの列番号（1-indexed）
 // ※このスプレッドシートは1行目=見出しのみ（説明行なし）のため、
 //   DATA_START_ROW は 2 から開始する。
-// 実際のシート列順: id, ownerHash, viewerHash, createdAt,
+// 実際のシート列順（ヘッダー行そのまま）: id, ownerHash, viewerHash, createdAt,
 // serious_relationship_status, partner_hash, serious_relationship_started_at, serious_relationship_ended_at,
-// q1, q2, q3, q4, q4Detail, q5, q7, q7Detail, q8, q9, q10, q11, q12, q13, q14, q15-1, q15-2, q16
+// q1-1, q1-2, q2, q3, q3Detail, q4, q6, q6Detail, q7, q8, q9, q10, q11, q12, q13, q14-1, q14-2, q15
+// ※列名はHTML/app.js側の画面表示Q番号に合わせてある（あだ名＝画面Q5は列自体が存在しない）。
 var ACOL = {
   ID: 1, OWNER_HASH: 2, VIEWER_HASH: 3, CREATED_AT: 4,
   SERIOUS_RELATIONSHIP_STATUS: 5, PARTNER_HASH: 6,
   SERIOUS_RELATIONSHIP_STARTED_AT: 7, SERIOUS_RELATIONSHIP_ENDED_AT: 8,
-  Q1: 9, Q2: 10, Q3: 11, Q4: 12, Q4_DETAIL: 13, Q5: 14, Q7: 15, Q7_DETAIL: 16,
-  Q8: 17, Q9: 18, Q10: 19, Q11: 20, Q12: 21, Q13: 22, Q14: 23,
-  Q15_1: 24, Q15_2: 25, Q16: 26
+  Q1_1: 9, Q1_2: 10, Q2: 11, Q3: 12, Q3_DETAIL: 13, Q4: 14,
+  Q6: 15, Q6_DETAIL: 16, Q7: 17, Q8: 18, Q9: 19, Q10: 20, Q11: 21, Q12: 22, Q13: 23,
+  Q14_1: 24, Q14_2: 25, Q15: 26
 };
 
 var DATA_START_ROW = 2; // 1行目=見出し, 2行目以降がデータ
@@ -171,12 +172,12 @@ function handleShare(body) {
     analyticsSheet.appendRow([
       id, ownerHash, '', now,
       '', '', '', '', // SERIOUS_RELATIONSHIP_STATUS / PARTNER_HASH / STARTED_AT / ENDED_AT（初期値は空。Partners側からsyncPartnerStatusで後から更新）
-      analytics.q1 || '', analytics.q2 || '', analytics.q3 || '',
-      analytics.q4 || '', analytics.q4Detail || '', analytics.q5 || '',
-      analytics.q7 || '', analytics.q7Detail || '',
-      analytics.q8 || '', analytics.q9 || '', analytics.q10 || '',
-      analytics.q11 || '', analytics.q12 || '', analytics.q13 || '', analytics.q14 || '',
-      analytics['q15-1'] || '', analytics['q15-2'] || '', analytics.q16 || ''
+      analytics['q1-1'] || '', analytics['q1-2'] || '', analytics.q2 || '',
+      analytics.q3 || '', analytics.q3Detail || '', analytics.q4 || '',
+      analytics.q6 || '', analytics.q6Detail || '',
+      analytics.q7 || '', analytics.q8 || '', analytics.q9 || '', analytics.q10 || '',
+      analytics.q11 || '', analytics.q12 || '', analytics.q13 || '',
+      analytics['q14-1'] || '', analytics['q14-2'] || '', analytics.q15 || ''
     ]);
 
     return jsonResponse({ ok: true, id: id });

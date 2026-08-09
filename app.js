@@ -721,8 +721,12 @@ async function handleSharedView(id) {
     return;
   }
 
-  /* ----- 友だち追加チェック ----- */
-  await checkFriendship();
+  /* ----- 友だち追加チェック -----
+     liff.getFriendship() / requestFriendship() はLINEサーバーへの通信を
+     伴うため、ここをawaitすると電波が悪い時に画面表示自体が止まって
+     しまう。必須の処理ではないので、裏側で実行させて画面構築は
+     先に進める（fire-and-forget）。 */
+  checkFriendship();
 
   /* ----- localStorage から下書き復元 ----- */
   try {

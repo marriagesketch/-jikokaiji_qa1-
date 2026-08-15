@@ -116,6 +116,62 @@ async function decryptJSON(base64, key) {
 }
 
 /* ------------------------------------------------------------
+   下書き移行（受信側）
+   ------------------------------------------------------------
+   旧LINEミニアプリ側で送信された下書きを、userIdから独自に導出した
+   鍵で復号して復元する。鍵はサーバーに一切渡さない（送信側と同じ
+   導出ロジックで、このアプリ側でも独立に計算する）。
+   ・新LIFF側に既に下書きがある場合は、勝手に上書きしない。
+   ・復元前に必ずユーザーへ確認ダイアログを出す。
+   ・GAS側のdraft_migrate_fetchは取得後に該当データを削除するため、
+     一度復元されたらサーバー側の控えは残らない。
+   ------------------------------------------------------------ */
+async function deriveMigrationKey(userId) {
+  const raw = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(userId + ":draft_migration_v1")
+  );
+  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["decrypt"]);
+}
+
+async function decryptMigratedDraft(base64, key) {
+  const combined = new Uint8Array(base64UrlToBuf(base64));
+  const iv = combined.slice(0, 12);
+  const data = combined.slice(12);
+  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+  return JSON.parse(new TextDecoder().decode(plainBuf));
+}
+
+async function tryRestoreMigratedDraft() {
+  try {
+    // 新LIFF側に既に下書きがあるなら何もしない（上書き事故防止）
+    if (localStorage.getItem(DRAFT_KEY)) return;
+
+    const userId = getLineUserId();
+    const ownerHash = await sha256Hex(userId);
+
+    const resp = await fetch(GAS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "draft_migrate_fetch", ownerHash }),
+    });
+    const result = await resp.json();
+    if (!result.ok || !result.found || !result.cipherText) return;
+
+    const key = await deriveMigrationKey(userId);
+    const draftObj = await decryptMigratedDraft(result.cipherText, key);
+
+    const ok = confirm("以前保存されていた下書きが見つかりました。復元しますか？");
+    if (!ok) return;
+
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draftObj));
+  } catch (e) {
+    console.error("draft migration restore failed", e);
+    // 失敗時は何もしない（通常の新規入力フローにフォールバック）
+  }
+}
+
+/* ------------------------------------------------------------
    スライダー値をビジュアル（SVG）に変換
    ------------------------------------------------------------ */
 function sliderVisualHTML(value, leftLabel, rightLabel, max = 5) {
@@ -758,6 +814,11 @@ async function handleSharedView(id) {
      しまう。必須の処理ではないので、裏側で実行させて画面構築は
      先に進める（fire-and-forget）。 */
   checkFriendship();
+
+  /* ----- 旧ミニアプリからの下書き移行チェック（無ければ何もしない） -----
+     ミニアプリからLIFFへの移行期間中のみ有効な処理。移行が完了したら
+     この呼び出しと tryRestoreMigratedDraft() ごと削除して構わない。 */
+  await tryRestoreMigratedDraft();
 
   /* ----- localStorage から下書き復元 ----- */
   try {

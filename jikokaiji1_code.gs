@@ -21,7 +21,6 @@
 var SPREADSHEET_ID   = '1Z1JGoWIBh0VqxVCeFph_O4PZIEMYAKj66I2Nx69zDLY'; 
 var SHARES_SHEET      = 'Shares';
 var ANALYTICS_SHEET   = 'Analytics';
-var DRAFT_MIGRATION_SHEET = 'DraftMigration'; // ミニアプリ→LIFF 下書き移行の一時中継用（暗号文のみ保持）
 var SCHEMA_VERSION    = 1;
 
 // Shares シートの列番号（1-indexed）
@@ -120,12 +119,6 @@ function doPost(e) {
     }
     if (body.action === 'syncPartnerStatus') {
       return handleSyncPartnerStatus(body);
-    }
-    if (body.action === 'draft_migrate_save') {
-      return handleDraftMigrateSave(body);
-    }
-    if (body.action === 'draft_migrate_fetch') {
-      return handleDraftMigrateFetch(body);
     }
     return jsonResponse({ ok: false, reason: 'invalid_action' });
   } catch (err) {
@@ -365,101 +358,4 @@ function findRowById(sheet, id) {
     if (ids[i][0] === id) return DATA_START_ROW + i;
   }
   return null;
-}
-
-
-/* ------------------------------------------------------------
-   下書き移行（LINEミニアプリ → LIFF）
-   ------------------------------------------------------------
-   ・DraftMigration シート（A列: ownerHash, B列: cipherText,
-     C列: updatedAt）に暗号文のみを一時保存する。
-   ・cipherText はクライアント側でuserId由来の専用鍵（ownerHashとは
-     別の導出値）を使って暗号化済みのため、このサーバー（および
-     管理者）は復号鍵を一切受け取らない。
-   ・draft_migrate_fetch は取得と同時に該当行を削除する
-     （一度きりの受け渡し。ポーリングや再利用はしない）。
-   ・ミニアプリの提供を終了し移行期間が終わったら、この一連の
-     関数とDraftMigrationシートごと削除して構わない。
-   ------------------------------------------------------------ */
-function getDraftMigrationSheet_() {
-  var ss = getSpreadsheet();
-  var sheet = ss.getSheetByName(DRAFT_MIGRATION_SHEET);
-  if (!sheet) {
-    sheet = ss.insertSheet(DRAFT_MIGRATION_SHEET);
-    sheet.appendRow(['ownerHash', 'cipherText', 'updatedAt', 'plainText']);
-  }
-  return sheet;
-}
-
-/* ownerHashが一致する行番号を返す（見つからなければ null） */
-function findDraftMigrationRow_(sheet, ownerHash) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow < DATA_START_ROW) return null;
-  var values = sheet.getRange(DATA_START_ROW, 1, lastRow - DATA_START_ROW + 1, 1).getValues();
-  for (var i = 0; i < values.length; i++) {
-    if (values[i][0] === ownerHash) return DATA_START_ROW + i;
-  }
-  return null;
-}
-
-function handleDraftMigrateSave(body) {
-  var ownerHash  = body.ownerHash;
-  var cipherText = body.cipherText;
-  if (!ownerHash || !cipherText) {
-    return jsonResponse({ ok: false, reason: 'invalid_params' });
-  }
-
-  var lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    var sheet = getDraftMigrationSheet_();
-    var rowIndex = findDraftMigrationRow_(sheet, ownerHash);
-    var now = new Date();
-
-    if (rowIndex) {
-      // 既存行を上書き（常に最新の下書きだけを保持）
-      sheet.getRange(rowIndex, 2, 1, 2).setValues([[cipherText, now]]);
-    } else {
-      sheet.appendRow([ownerHash, cipherText, now]);
-    }
-    return jsonResponse({ ok: true });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function handleDraftMigrateFetch(body) {
-  var ownerHash = body.ownerHash;
-  if (!ownerHash) {
-    return jsonResponse({ ok: false, reason: 'invalid_params' });
-  }
-
-  var lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    var sheet = getDraftMigrationSheet_();
-    var rowIndex = findDraftMigrationRow_(sheet, ownerHash);
-    if (!rowIndex) {
-      return jsonResponse({ ok: true, found: false });
-    }
-
-    var rowValues  = sheet.getRange(rowIndex, 1, 1, 4).getValues()[0];
-    var cipherText = rowValues[1];
-    var plainText  = rowValues[3];
-
-    // 一度きりの受け渡しとして、取得後は行を削除する
-    sheet.deleteRow(rowIndex);
-
-    if (cipherText) {
-      // 旧ミニアプリからの自動送信（暗号化済み）
-      return jsonResponse({ ok: true, found: true, cipherText: cipherText });
-    }
-    if (plainText) {
-      // 運営が手動で貼り付けた平文JSON（暗号化なし）
-      return jsonResponse({ ok: true, found: true, plainText: plainText });
-    }
-    return jsonResponse({ ok: true, found: false });
-  } finally {
-    lock.releaseLock();
-  }
 }

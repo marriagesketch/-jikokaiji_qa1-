@@ -156,10 +156,19 @@ async function tryRestoreMigratedDraft() {
       body: JSON.stringify({ action: "draft_migrate_fetch", ownerHash }),
     });
     const result = await resp.json();
-    if (!result.ok || !result.found || !result.cipherText) return;
+    if (!result.ok || !result.found) return;
 
-    const key = await deriveMigrationKey(userId);
-    const draftObj = await decryptMigratedDraft(result.cipherText, key);
+    let draftObj;
+    if (result.cipherText) {
+      // 旧ミニアプリからの自動送信（暗号化済み）
+      const key = await deriveMigrationKey(userId);
+      draftObj = await decryptMigratedDraft(result.cipherText, key);
+    } else if (result.plainText) {
+      // 運営が手動でシートに貼り付けた平文JSON（暗号化なし）
+      draftObj = JSON.parse(result.plainText);
+    } else {
+      return;
+    }
 
     const ok = confirm("以前保存されていた下書きが見つかりました。復元しますか？");
     if (!ok) return;

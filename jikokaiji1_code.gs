@@ -386,7 +386,7 @@ function getDraftMigrationSheet_() {
   var sheet = ss.getSheetByName(DRAFT_MIGRATION_SHEET);
   if (!sheet) {
     sheet = ss.insertSheet(DRAFT_MIGRATION_SHEET);
-    sheet.appendRow(['ownerHash', 'cipherText', 'updatedAt']);
+    sheet.appendRow(['ownerHash', 'cipherText', 'updatedAt', 'plainText']);
   }
   return sheet;
 }
@@ -443,12 +443,22 @@ function handleDraftMigrateFetch(body) {
       return jsonResponse({ ok: true, found: false });
     }
 
-    var cipherText = sheet.getRange(rowIndex, 2).getValue();
+    var rowValues  = sheet.getRange(rowIndex, 1, 1, 4).getValues()[0];
+    var cipherText = rowValues[1];
+    var plainText  = rowValues[3];
 
     // 一度きりの受け渡しとして、取得後は行を削除する
     sheet.deleteRow(rowIndex);
 
-    return jsonResponse({ ok: true, found: true, cipherText: cipherText });
+    if (cipherText) {
+      // 旧ミニアプリからの自動送信（暗号化済み）
+      return jsonResponse({ ok: true, found: true, cipherText: cipherText });
+    }
+    if (plainText) {
+      // 運営が手動で貼り付けた平文JSON（暗号化なし）
+      return jsonResponse({ ok: true, found: true, plainText: plainText });
+    }
+    return jsonResponse({ ok: true, found: false });
   } finally {
     lock.releaseLock();
   }

@@ -466,7 +466,7 @@ function buildWatermarkSVG(text) {
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${tileW}" height="${tileH}">` +
       `<text x="0" y="${tileH / 2}" font-size="12" font-family="sans-serif" ` +
-      `fill="rgba(0,0,0,0.55)" transform="rotate(-28 ${tileW / 2} ${tileH / 2})">${safeText}</text>` +
+      `fill="rgba(0,0,0,0.3)" transform="rotate(-28 ${tileW / 2} ${tileH / 2})">${safeText}</text>` +
     `</svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

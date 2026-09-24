@@ -458,14 +458,18 @@ function getLineUserId() {
    画面全体に薄く敷き詰めて表示する。position:fixedのため
    スクロールしても常に画面上に留まる。
    ------------------------------------------------------------ */
-function buildWatermarkSVG(text) {
+function buildWatermarkSVG(lines) {
   const tileW = 240, tileH = 140;
-  const safeText = escapeHTML(text);
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${tileW}" height="${tileH}">` +
-      `<text x="0" y="${tileH / 2}" font-size="12" font-family="sans-serif" ` +
-      `fill="rgba(0,0,0,0.1)" transform="rotate(-28 ${tileW / 2} ${tileH / 2})">${safeText}</text>` +
-    `</svg>`;
+  const lineHeight = 16;
+  const startY = tileH / 2 - ((lines.length - 1) * lineHeight) / 2;
+
+  const textEls = lines.map((line, i) => {
+    const y = startY + i * lineHeight;
+    return `<text x="0" y="${y}" font-size="12" font-family="sans-serif" ` +
+           `fill="rgba(0,0,0,0.1)" transform="rotate(-28 ${tileW / 2} ${tileH / 2})">${escapeHTML(line)}</text>`;
+  }).join("");
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${tileW}" height="${tileH}">${textEls}</svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
@@ -476,8 +480,11 @@ function showScreenshotWatermark(viewerHash) {
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit",
   });
-  const label = `${viewerHash.slice(0, 8)}  ${stamp}`;
-  el.style.backgroundImage = `url("${buildWatermarkSVG(label)}")`;
+  const lines = [
+    "スクショ・転載禁止",
+    `${viewerHash.slice(0, 8)}  ${stamp}`,
+  ];
+  el.style.backgroundImage = `url("${buildWatermarkSVG(lines)}")`;
   el.classList.add("show");
 }
 

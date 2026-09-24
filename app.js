@@ -501,7 +501,7 @@ function escapeHTML(str) {
    共有URLは「id＋鍵」のみで構成される短いリンクになるため、
    ボタン(uriアクション)の1000文字制限に達することはほぼない。
    ------------------------------------------------------------ */
-const HEADER_IMAGE_URL = "https://marriagesketch.github.io/-jikokaiji_qa1-/image_message.jpg";
+const SHARETARGETPICKER_IMAGE_URL = "https://marriagesketch.github.io/-jikokaiji_qa1-/sharetargetpicker.jpg";
 
 function buildShareFlexMessage(shareName, shareURL) {
   const nameLine = shareName ? `${shareName}さんの回答が届きました` : "回答が届きました";
@@ -513,7 +513,7 @@ function buildShareFlexMessage(shareName, shareURL) {
       type: "bubble",
       hero: {
         type: "image",
-        url: HEADER_IMAGE_URL,
+        url: SHARETARGETPICKER_IMAGE_URL,
         size: "full",
         aspectRatio: "3:2",
         aspectMode: "cover"

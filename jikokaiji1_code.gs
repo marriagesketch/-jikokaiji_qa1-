@@ -54,6 +54,7 @@ var DATA_START_ROW = 2; // 1行目=見出し, 2行目以降がデータ
 var DRAFTS_SHEET = 'Drafts';
 var DCOL = { OWNER_HASH: 1, CIPHER_TEXT: 2, SAVED_AT: 3, UPDATED_AT: 4 };
 var DRAFT_MAX_CIPHER_LENGTH = 40000; // セルの上限(50,000文字)に対する余裕
+var DRAFT_DATE_FORMAT = 'yyyy/MM/dd HH:mm:ss'; // savedAt / updatedAt 列の表示形式
 
 /* ------------------------------------------------------------
    真剣交際パートナー機能連携（Partners中央API）
@@ -330,12 +331,14 @@ function updateAnalyticsViewerHash(id, viewerHash) {
        暗号鍵は導出できない）
    ・1人（ownerHash）につき1行。保存のたびに同じ行を上書きする。
    ・savedAt はクライアント側の時刻（ミリ秒）。端末側の下書きとの新旧
-     比較に使うため、そのまま保存して返す。
+     比較に使う。シート上では見やすいよう日時（Date）として保存し、
+     返す時にミリ秒の数値へ戻す（旧形式の数値のままの行も読める）。
    ------------------------------------------------------------ */
 function handleSaveDraft(body) {
   var ownerHash  = body.ownerHash;
   var cipherText = body.cipherText;
-  var savedAt    = Number(body.savedAt) || Date.now();
+  var savedAt    = Number(body.savedAt);
+  if (!isFinite(savedAt) || savedAt <= 0) savedAt = Date.now();
 
   if (typeof ownerHash !== 'string' || !/^[0-9a-f]{64}$/.test(ownerHash) ||
       typeof cipherText !== 'string' || !cipherText) {
@@ -354,13 +357,16 @@ function handleSaveDraft(body) {
       sheet = ss.insertSheet(DRAFTS_SHEET);
       sheet.appendRow(['ownerHash', 'cipherText', 'savedAt', 'updatedAt']);
     }
-    var rowValues = [ownerHash, cipherText, savedAt, new Date()];
+    var rowValues = [ownerHash, cipherText, new Date(savedAt), new Date()];
     var targetRow = findDraftRowByOwnerHash(sheet, ownerHash);
     if (targetRow) {
       sheet.getRange(targetRow, 1, 1, rowValues.length).setValues([rowValues]);
     } else {
       sheet.appendRow(rowValues);
+      targetRow = sheet.getLastRow();
     }
+    // savedAt / updatedAt を同じ日時形式で表示（旧形式の数値セルが残っていても揃う）
+    sheet.getRange(targetRow, DCOL.SAVED_AT, 1, 2).setNumberFormat(DRAFT_DATE_FORMAT);
     return jsonResponse({ ok: true, savedAt: savedAt });
   } finally {
     lock.releaseLock();
@@ -378,10 +384,12 @@ function handleLoadDraft(ownerHash) {
   if (!targetRow) return jsonResponse({ ok: false, reason: 'not_found' });
 
   var row = sheet.getRange(targetRow, 1, 1, DCOL.UPDATED_AT).getValues()[0];
+  var savedAtCell = row[DCOL.SAVED_AT - 1];
+  var savedAt = (savedAtCell instanceof Date) ? savedAtCell.getTime() : (Number(savedAtCell) || 0);
   return jsonResponse({
     ok: true,
     cipherText: String(row[DCOL.CIPHER_TEXT - 1]),
-    savedAt: Number(row[DCOL.SAVED_AT - 1]) || 0
+    savedAt: savedAt
   });
 }
 

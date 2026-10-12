@@ -15,7 +15,7 @@ const DRAFT_CLEARED_AT_KEY = "konkatsu_qa_part1_draft_cleared_at";
 // 【一時対応】この日時（日本時間）以前に記録された「クリア」は無視し、クリア済み扱いにしない。
 // クラウド下書きを手動で優先させる運用のため。不要になったら、この定数と
 // getDraftClearedAt 内の「一時対応」の2行を削除する。
-const DRAFT_CLEARED_IGNORE_BEFORE = Date.parse("2026-10-12T16:52:40+09:00");
+const DRAFT_CLEARED_IGNORE_BEFORE = Date.parse("2026-10-13T16:52:40+09:00");
 // クラウド下書きの暗号鍵導出用（LINEユーザーIDと組み合わせる）。変更すると過去のクラウド下書きは復号できなくなる
 const DRAFT_CRYPTO_SALT = "konkatsu_qa_part1_draft_key_v1:";
 

@@ -12,6 +12,10 @@ const DRAFT_KEY = "konkatsu_qa_part1_draft";
 const PENDING_SHARED_VIEW_KEY = "konkatsu_qa_part1_pending_shared_view";
 // 「クリア」した時刻。これ以前のクラウド下書きは自動復元しない（意図的なクリアを尊重するため）
 const DRAFT_CLEARED_AT_KEY = "konkatsu_qa_part1_draft_cleared_at";
+// 【一時対応】この日時（日本時間）以前に記録された「クリア」は無視し、クリア済み扱いにしない。
+// クラウド下書きを手動で優先させる運用のため。不要になったら、この定数と
+// getDraftClearedAt 内の「一時対応」の2行を削除する。
+const DRAFT_CLEARED_IGNORE_BEFORE = Date.parse("2026-10-12T16:52:40+09:00");
 // クラウド下書きの暗号鍵導出用（LINEユーザーIDと組み合わせる）。変更すると過去のクラウド下書きは復号できなくなる
 const DRAFT_CRYPTO_SALT = "konkatsu_qa_part1_draft_key_v1:";
 
@@ -324,7 +328,11 @@ function writeLocalDraft(data, savedAt = Date.now()) {
 }
 
 function getDraftClearedAt() {
-  try { return Number(localStorage.getItem(DRAFT_CLEARED_AT_KEY)) || 0; } catch (_) { return 0; }
+  let ts = 0;
+  try { ts = Number(localStorage.getItem(DRAFT_CLEARED_AT_KEY)) || 0; } catch (_) {}
+  // 【一時対応】基準日時以前のクリア記録は無視する
+  if (ts <= DRAFT_CLEARED_IGNORE_BEFORE) return 0;
+  return ts;
 }
 function setDraftClearedAt(ts) {
   try { localStorage.setItem(DRAFT_CLEARED_AT_KEY, String(ts)); } catch (_) {}

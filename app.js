@@ -12,10 +12,12 @@ const DRAFT_KEY = "konkatsu_qa_part1_draft";
 const PENDING_SHARED_VIEW_KEY = "konkatsu_qa_part1_pending_shared_view";
 // 「クリア」した時刻。これ以前のクラウド下書きは自動復元しない（意図的なクリアを尊重するため）
 const DRAFT_CLEARED_AT_KEY = "konkatsu_qa_part1_draft_cleared_at";
+// この端末が最後に把握した（保存した／読み込んだ／確認して見送った）クラウド下書きの版（保存時刻）
+const DRAFT_SYNCED_AT_KEY = "konkatsu_qa_part1_draft_cloud_synced_at";
 // 【一時対応】この日時（日本時間）以前に記録された「クリア」は無視し、クリア済み扱いにしない。
 // クラウド下書きを手動で優先させる運用のため。不要になったら、この定数と
 // getDraftClearedAt 内の「一時対応」の2行を削除する。
-const DRAFT_CLEARED_IGNORE_BEFORE = Date.parse("2026-10-13T16:52:40+09:00");
+const DRAFT_CLEARED_IGNORE_BEFORE = Date.parse("2026-10-12T16:52:40+09:00");
 // クラウド下書きの暗号鍵導出用（LINEユーザーIDと組み合わせる）。変更すると過去のクラウド下書きは復号できなくなる
 const DRAFT_CRYPTO_SALT = "konkatsu_qa_part1_draft_key_v1:";
 
@@ -338,6 +340,16 @@ function setDraftClearedAt(ts) {
   try { localStorage.setItem(DRAFT_CLEARED_AT_KEY, String(ts)); } catch (_) {}
 }
 
+/* この端末が最後に把握したクラウド下書きの「版」。
+   端末ごとの時計のずれに左右されないよう、時刻の大小ではなく
+   「別の版かどうか（＝別の端末などで更新されたか）」の判定に使う。 */
+function getCloudSyncedAt() {
+  try { return Number(localStorage.getItem(DRAFT_SYNCED_AT_KEY)) || 0; } catch (_) { return 0; }
+}
+function setCloudSyncedAt(ts) {
+  try { localStorage.setItem(DRAFT_SYNCED_AT_KEY, String(ts)); } catch (_) {}
+}
+
 /* ----- クラウド（GAS） ----- */
 function fetchWithTimeout(url, options = {}, ms = 15000) {
   const ctrl = new AbortController();
@@ -365,6 +377,7 @@ async function saveCloudDraft(data, savedAt = Date.now()) {
   });
   const result = await resp.json();
   if (!result.ok) throw new Error(result.reason || "save_draft_failed");
+  setCloudSyncedAt(savedAt); // この端末が保存した版 ＝ 把握済み
   return savedAt;
 }
 
@@ -385,7 +398,7 @@ async function loadCloudDraft() {
 }
 
 /* ----- 起動時：クラウドの下書きを確認して必要なら復元（画面表示はブロックしない） ----- */
-async function syncCloudDraft(localDraft) {
+async function syncCloudDraft() {
   let cloud;
   try {
     cloud = await loadCloudDraft();
@@ -403,18 +416,25 @@ async function syncCloudDraft(localDraft) {
     resetFormFields();
     restoreFormData(cloud.data);
     writeLocalDraft(cloud.data, cloud.savedAt);
+    setCloudSyncedAt(cloud.savedAt);
     return;
   }
 
-  // 端末側にも入力あり。クラウドの方が新しく、内容も違う場合だけ確認する
-  const localAt = localDraft ? localDraft.savedAt : 0;
-  if (cloud.savedAt > localAt + 1000 && JSON.stringify(cloud.data) !== JSON.stringify(current)) {
-    if (confirm("クラウドに、この端末より新しい下書きが保存されています。読み込みますか？\n（読み込むと、いま画面にある入力内容は置き換わります）")) {
-      resetFormFields();
-      restoreFormData(cloud.data);
-      writeLocalDraft(cloud.data, cloud.savedAt);
-    }
+  // 端末側にも入力あり。
+  // この端末が最後に把握した版と違う（＝別の端末などで更新された）かつ、内容も違う場合だけ確認する
+  if (cloud.savedAt === getCloudSyncedAt()) return; // 把握済みの版
+  if (JSON.stringify(cloud.data) === JSON.stringify(current)) {
+    setCloudSyncedAt(cloud.savedAt); // 内容が同じなら何も聞かず、版だけ揃える
+    return;
   }
+  const when = cloud.savedAt ? new Date(cloud.savedAt).toLocaleString("ja-JP") : "";
+  if (confirm("クラウドに、別の端末などで保存された下書きがあります" + (when ? "（" + when + "）" : "") +
+              "。読み込みますか？\n（読み込むと、いま画面にある入力内容は置き換わります）")) {
+    resetFormFields();
+    restoreFormData(cloud.data);
+    writeLocalDraft(cloud.data, cloud.savedAt);
+  }
+  setCloudSyncedAt(cloud.savedAt); // 読み込んだ場合も、見送った場合も「確認済み」にする
 }
 
 /* ----- 送信済みの回答を、自分の下書きとして復元する（共有リンクの所有者のみ） ----- */
@@ -969,7 +989,10 @@ async function handleSharedView(id) {
     clearTimeout(autosaveTimer);
     autosaveTimer = null;
     const data = collectFormData();
-    if (!isBlankForm(data)) writeLocalDraft(data);
+    if (isBlankForm(data)) return;
+    const saved = readLocalDraft();
+    if (saved && JSON.stringify(saved.data) === JSON.stringify(data)) return; // 変更なし → 保存時刻は更新しない
+    writeLocalDraft(data);
   };
   const scheduleAutosave = (e) => {
     if (e && e.target && e.target.closest && e.target.closest("#shareModal")) return;
@@ -984,7 +1007,7 @@ async function handleSharedView(id) {
   window.addEventListener("pagehide", flushAutosave);
 
   /* ----- クラウドの下書きを確認（裏で実行。画面表示は止めない） ----- */
-  syncCloudDraft(localDraft);
+  syncCloudDraft();
 
   /* ----- 下書き保存（端末 ＋ クラウド） ----- */
   document.getElementById("draftBtn").addEventListener("click", async () => {
